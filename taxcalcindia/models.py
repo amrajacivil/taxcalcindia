@@ -1,27 +1,41 @@
-
 """Models for tax calculation in India"""
 
+from enum import Enum
 from exceptions import TaxCalculationException
+
+
+class EmploymentType(Enum):
+  """Employment type of the taxpayer.
+
+  Args:
+      Enum (str): Description of the employment type.
+  """    
+  PRIVATE = "private"
+  GOVERNMENT = "government"
+  SELF_EMPLOYED = "self_employed"
 
 
 class TaxSettings:
   """Tax settings for an individual taxpayer.
   """  
-  def __init__(self,age: int,financial_year: int,is_metro_resident: bool = True):
+  def __init__(self, age: int, financial_year: int, is_metro_resident: bool = True, employment_type: EmploymentType = EmploymentType.PRIVATE):
     """Initialize tax settings for an individual taxpayer.
 
     Args:
         age (int): Age of the taxpayer.
         financial_year (int): Financial year for tax calculation.
         is_metro_resident (bool, optional): Whether the taxpayer resides in a metro area. Defaults to True.
+        employment_type (EmploymentType, optional): Employment type. Defaults to EmploymentType.PRIVATE.
 
     Raises:
         TaxCalculationException: If the age is invalid.
         TaxCalculationException: If the financial year is not supported.
     """
-    self.age=age
-    self.financial_year=financial_year
-    self.is_metro_resident=is_metro_resident
+    self.age = age
+    self.financial_year = financial_year
+    self.is_metro_resident = is_metro_resident
+    self.employment_type = employment_type
+
     if self.age not in list(range(18,101,1)):
       raise TaxCalculationException("invalid age")
     if self.financial_year not in list(range(2025,2051,1)):
@@ -156,7 +170,7 @@ class Deductions:
                section_80ggc=0,
                section_80tta=0,
                section_80ttb=0,
-               hra_exemption=0,
+               rent_for_hra_exemption=0,
                professional_tax=0,
                food_coupons=0,
                other_exemption=0):
@@ -181,7 +195,7 @@ class Deductions:
         section_80ggc (int, optional): Section 80GGD deductions. Defaults to 0.
         section_80tta (int, optional): Section 80TTA deductions. Defaults to 0.
         section_80ttb (int, optional): Section 80TTB deductions. Defaults to 0.
-        hra_exemption (int, optional): HRA exemption. Defaults to 0.
+        rent_for_hra_exemption (int, optional): Rent paid for HRA exemption. Defaults to 0.
         professional_tax (int, optional): Professional tax. Defaults to 0.
         food_coupons (int, optional): Food coupons. Defaults to 0.
         other_exemption (int, optional): Other exemptions. Defaults to 0.
@@ -204,13 +218,10 @@ class Deductions:
     self.section_80ggc=section_80ggc #no limit
     self.section_80tta=min(section_80tta, 10000)
     self.section_80ttb=min(section_80ttb, 50000)
-    self.hra_exemption=hra_exemption # calculated based on settings
+    self.rent_for_hra_exemption=rent_for_hra_exemption # calculated based on settings
     self.professional_tax=min(professional_tax, 2500)
     self.food_coupons=min(food_coupons, 26000)
     self.other_exemption=other_exemption #no limit
-
-
-
 
   @property
   def total(self):
@@ -222,7 +233,6 @@ class Deductions:
     return (
         self.section_80c
         + self.section_80d
-        + self.section_80gg
         + self.section_80dd
         + self.section_80ddb
         + self.section_24b
@@ -238,7 +248,6 @@ class Deductions:
         + self.section_80ggc
         + self.section_80ggc
         + self.section_80ttb
-        + min(self.hra_exemption,0)
         + self.professional_tax
         + self.food_coupons
         + self.other_exemption
