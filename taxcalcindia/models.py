@@ -1,7 +1,7 @@
 """Models for tax calculation in India"""
 
 from enum import Enum
-from exceptions import TaxCalculationException
+from .exceptions import TaxCalculationException
 
 
 class EmploymentType(Enum):
@@ -41,16 +41,6 @@ class TaxSettings:
     if self.financial_year not in list(range(2025,2051,1)):
       raise TaxCalculationException("module does not support tax calculation for financial years prior to 2025")
 
-  @property
-  def standard_deduction(self):
-    """Get the standard deduction for the taxpayer.
-
-    Returns:
-        int: The standard deduction amount.
-    """    
-    if self.financial_year>=2024:
-        return 75000
-    return 50000
   
 class SalaryIncome:
   """Salary income details for the taxpayer.
@@ -117,7 +107,50 @@ class BusinessIncome:
     return (
         self.business_income
         + self.property_income
+    )
+  
+class CapitalGainsIncome:
+  """Capital gains income details for the taxpayer.
+  """  
+  def __init__(self, short_term_at_normal = 0, short_term_at_20_percent = 0, long_term_at_12_5_percent = 0, long_term_at_20_percent = 0):
+    """Initialize capital gains income details for the taxpayer.
 
+    Args:
+        short_term_at_normal (int): Short-term capital gains taxed at normal rates.
+        short_term_at_20_percent (int): Short-term capital gains taxed at 20%.
+        long_term_at_12_5_percent (int): Long-term capital gains taxed at 12.5%.
+        long_term_at_20_percent (int): Long-term capital gains taxed at 20%.
+    """
+    self.short_term_at_normal = short_term_at_normal
+    self.short_term_at_20_percent = short_term_at_20_percent
+    self.long_term_at_12_5_percent = long_term_at_12_5_percent
+    self.long_term_at_20_percent = long_term_at_20_percent
+
+  @property
+  def total(self):
+    """Get the total capital gains income.
+
+    Returns:
+        int: The total capital gains income.
+    """
+    return ( 
+      self.short_term_at_normal
+          + self.short_term_at_20_percent
+          + self.long_term_at_12_5_percent
+          + self.long_term_at_20_percent
+    )
+
+  @property
+  def total_capital_gains_tax(self):
+    """Calculate the total capital gains tax.
+
+    Returns:
+        float: The total capital gains tax.
+    """    
+    return (
+      self.short_term_at_20_percent * 0.2
+          + self.long_term_at_12_5_percent * 0.125
+          + self.long_term_at_20_percent * 0.2
     )
 
 class OtherIncome:
@@ -168,8 +201,6 @@ class Deductions:
                section_80g_100percent=0,
                section_80gga=0,
                section_80ggc=0,
-               section_80tta=0,
-               section_80ttb=0,
                rent_for_hra_exemption=0,
                professional_tax=0,
                food_coupons=0,
@@ -193,8 +224,6 @@ class Deductions:
         section_80g_100percent (int, optional): Section 80G 100% deductions. Defaults to 0.
         section_80gga (int, optional): Section 80GGA deductions. Defaults to 0.
         section_80ggc (int, optional): Section 80GGD deductions. Defaults to 0.
-        section_80tta (int, optional): Section 80TTA deductions. Defaults to 0.
-        section_80ttb (int, optional): Section 80TTB deductions. Defaults to 0.
         rent_for_hra_exemption (int, optional): Rent paid for HRA exemption. Defaults to 0.
         professional_tax (int, optional): Professional tax. Defaults to 0.
         food_coupons (int, optional): Food coupons. Defaults to 0.
@@ -216,12 +245,41 @@ class Deductions:
     self.section_80g_100percent=section_80g_100percent #no limit
     self.section_80gga=section_80gga #no limit
     self.section_80ggc=section_80ggc #no limit
-    self.section_80tta=min(section_80tta, 10000)
-    self.section_80ttb=min(section_80ttb, 50000)
+    self._section_80tta = 0
+    self._section_80ttb = 0
     self.rent_for_hra_exemption=rent_for_hra_exemption # calculated based on settings
     self.professional_tax=min(professional_tax, 2500)
     self.food_coupons=min(food_coupons, 26000)
     self.other_exemption=other_exemption #no limit
+
+  
+  @property
+  def section_80tta(self):
+    return self._section_80tta
+
+  @section_80tta.setter
+  def section_80tta(self, value):
+    """Set section 80TTA value with basic validation (non-negative)."""
+    if value is None:
+      value = 0
+    if value < 0:
+      raise TaxCalculationException("section_80tta cannot be negative")
+    value = min(value, 10000)
+    self._section_80tta = value
+
+  @property
+  def section_80ttb(self):
+    return self._section_80ttb
+
+  @section_80ttb.setter
+  def section_80ttb(self, value):
+    """Set section 80TTB value with basic validation (non-negative)."""
+    if value is None:
+      value = 0
+    if value < 0:
+      raise TaxCalculationException("section_80ttb cannot be negative")
+    value = min(value, 50000)
+    self._section_80ttb = value
 
   @property
   def total(self):
@@ -247,6 +305,7 @@ class Deductions:
         + self.section_80gga
         + self.section_80ggc
         + self.section_80ggc
+        + self.section_80tta
         + self.section_80ttb
         + self.professional_tax
         + self.food_coupons

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taxcalcindia"
+version = "0.1.0"
+description = "A package to calculate income tax for Indian taxpayers"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Arumugam Maharaja", email = "raja1998civil@gmail.com" }
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/amrajacivil/taxcalcindia"
