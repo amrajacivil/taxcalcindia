@@ -313,6 +313,6 @@ class IncomeTaxCalculator:
       }
 
     pprint.pprint(result, indent=2, sort_dicts=False)
-    return
+    return result
 
 
