@@ -1,6 +1,7 @@
 from .models import SalaryIncome,CapitalGainsIncome,BusinessIncome,OtherIncome,Deductions,TaxSettings,EmploymentType
 from .slabs import get_tax_slabs
 import pprint
+import math
 
 
 NEW_REGIME_KEY="new_regime"
@@ -235,8 +236,12 @@ class IncomeTaxCalculator:
     slabs = get_tax_slabs(self.settings.financial_year, self.settings.age)
     new_taxable, old_taxable = self.__get_taxable_income()
     if self.capital_gains:
-      new_taxable -= self.capital_gains.total
-      old_taxable -= self.capital_gains.total
+      new_taxable -= (self.capital_gains.short_term_at_20_percent 
+                    + self.capital_gains.long_term_at_12_5_percent 
+                    + self.capital_gains.long_term_at_20_percent)
+      old_taxable -= (self.capital_gains.short_term_at_20_percent 
+                    + self.capital_gains.long_term_at_12_5_percent 
+                    + self.capital_gains.long_term_at_20_percent)
 
     # choose appropriate old-regime slab based on age
     if self.settings.age >= 80:
@@ -291,12 +296,12 @@ class IncomeTaxCalculator:
       },
       "tax_liability": {
         "new_regime": {
-          "total":  new_tax_total,
+          "total":  math.ceil(new_tax_total),
           "surcharge": new_result["surcharge"]["amount"],
           "cess" : new_result["cess"]
         },
         "old_regime": {
-          "total": old_tax_total,
+          "total": math.ceil(old_tax_total),
           "surcharge": old_result["surcharge"]["amount"],
           "cess" : old_result["cess"]
         }

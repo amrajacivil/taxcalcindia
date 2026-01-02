@@ -1,4 +1,3 @@
-*.ipynb
 *.pyc
 validation.py
 __pycache__/

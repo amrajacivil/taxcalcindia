@@ -249,7 +249,7 @@ class Deductions:
     self._section_80ttb = 0
     self.rent_for_hra_exemption=rent_for_hra_exemption # calculated based on settings
     self.professional_tax=min(professional_tax, 2500)
-    self.food_coupons=min(food_coupons, 26000)
+    self.food_coupons=min(food_coupons, 26400)
     self.other_exemption=other_exemption #no limit
 
   
