@@ -51,7 +51,8 @@ print(result)
 
 ## Example notebook
 
-A longer, runnable example is provided in the repository: [example.ipynb](example.ipynb). It contains multiple scenarios and is extended based on user requests.
+A longer, runnable example is provided in the repository: [example.ipynb](https://github.com/amrajacivil/taxcalcindia). It contains multiple scenarios and is extended based on user requests.
+
 
 ## API pointers
 
@@ -77,7 +78,7 @@ Contributions via PRs are welcome. Please:
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT — see [LICENSE]((https://github.com/amrajacivil/taxcalcindia))
 
 ## Important notice
 
