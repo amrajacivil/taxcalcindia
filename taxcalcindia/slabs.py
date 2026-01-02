@@ -1,7 +1,9 @@
 from typing import Dict, List, Tuple, Union
+from types import MappingProxyType
+
 
 Number = Union[int, float]
-Slab = Tuple[Number, float]  # (upper_limit, rate)
+Slab = Tuple[Number, float]
 
 def _base_slabs() -> Dict[str, List[Slab]]:
     """
@@ -46,4 +48,5 @@ def get_tax_slabs(financial_year: Union[int, str] | None, age: int | None) -> Di
     # Placeholder: adjust slabs based on financial_year if needed in future.
     slabs = _base_slabs()
 
-    return slabs
+    immutable = {k: tuple(v) for k, v in slabs.items()}
+    return MappingProxyType(immutable)

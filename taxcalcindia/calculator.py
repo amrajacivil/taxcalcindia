@@ -29,19 +29,13 @@ class IncomeTaxCalculator:
       deductions: Deductions | None = None
       ):
     """Income Tax Calculator for individuals.
-
-    Args:
-        settings (TaxSettings): Tax settings for the individual.
-        salary (SalaryIncome | None, optional): Salary income details. Defaults to None.
-        capital_gains (CapitalGainsIncome | None, optional): Capital gains income details. Defaults to None.
-        business (BusinessIncome | None, optional): Business income details. Defaults to None.
-        other_income (OtherIncome | None, optional): Other income details. Defaults to None.
-        deductions (Deductions | None, optional): Deduction details. Defaults to None.
     """      
     self._validate_inputs(
         settings, salary, capital_gains, business, other_income, deductions
     )
     self.settings=settings
+    # preserve whether a salary component was explicitly provided
+    self._has_salary = salary is not None
     self.salary=salary or SalaryIncome()
     self.capital_gains=capital_gains or CapitalGainsIncome()
     self.business=business or BusinessIncome()
@@ -116,10 +110,27 @@ class IncomeTaxCalculator:
       else:
         self.deductions.section_80tta=self.other_income.savings_account_interest
         self.deductions.section_80ttb=0
+
+    #section_80ddb
+    if self.settings.age>60:
+      self.deductions.section_80ddb=min(self.deductions.section_80ddb,100000)
+    else:
+      self.deductions.section_80ddb=min(self.deductions.section_80ddb,40000)
+
+    #section_80ccd_2
+    if self.settings.employment_type == EmploymentType.GOVERNMENT:
+      self.deductions.section_80ccd_2 = min(self.deductions.section_80ccd_2, self.salary.basic_and_da * 0.14)
+    elif self.settings.employment_type == EmploymentType.PRIVATE:
+      self.deductions.section_80ccd_2 = min(self.deductions.section_80ccd_2, self.salary.basic_and_da * 0.10)
+    else:
+      self.deductions.section_80ccd_2 = 0
+      
     return (
         self.deductions.total
         + max(self.__calculate_hra_component_for_private(),0)
         + max(self.__calculate_hra_component_for_self_employed(),0)
+        + self.deductions.section_80ddb
+        + self.deductions.section_80ccd_2
     )
 
 
@@ -140,14 +151,17 @@ class IncomeTaxCalculator:
       old_regime_taxable_income=max(0, self.gross_income  - self.total_deductions)
       new_regime_taxable_income=max(0, self.gross_income)
       return new_regime_taxable_income, old_regime_taxable_income
-    old_regime_taxable_income=max(0, self.gross_income - OLD_REGIME_STANDARD_DEDUCTION - self.total_deductions)
-    new_regime_taxable_income=max(0, self.gross_income - NEW_REGIME_STANDARD_DEDUCTION)
+    
+    if (not self._has_salary) or (getattr(self.salary, "total", 0) == 0):
+      old_regime_taxable_income = max(0, self.gross_income - self.total_deductions)
+      new_regime_taxable_income = max(0, self.gross_income)
+    else:
+      old_regime_taxable_income=max(0, self.gross_income - OLD_REGIME_STANDARD_DEDUCTION - self.total_deductions)
+      new_regime_taxable_income=max(0, self.gross_income - NEW_REGIME_STANDARD_DEDUCTION)
     return new_regime_taxable_income, old_regime_taxable_income
   
   def __calculate_surcharge(self, taxable_income, regime_type, tax_amount=0):
-    
     ti = float(taxable_income)
-
     def get_rate(ti_value: float, is_new: bool) -> int:
       if ti_value <= 5000000:
         return 0
@@ -197,13 +211,36 @@ class IncomeTaxCalculator:
       previous_limit = limit
     return tax, tax_per_slab
 
-
+  def __stringify_keys(self,obj):
+    if isinstance(obj, dict):
+        new = {}
+        for k, v in obj.items():
+            # convert non-JSON-safe keys (like tuples) to strings
+            new_key = k if isinstance(k, (str, int, float, bool, type(None))) else str(k)
+            new[new_key] = self.__stringify_keys(v)
+        return new
+    if isinstance(obj, list):
+        return [self.__stringify_keys(i) for i in obj]
+    return obj
+  
   def __compute_regime_tax(self, taxable_income: float, slab, rebate_limit: float, regime_type: str, apply_deduction: float = 0.0):
     """Compute tax, surcharge, and cess for a given regime. Returns a dict with components."""
     if taxable_income > rebate_limit:
+      is_income_above_rebate=True
+    else:
+      is_income_above_rebate=False
+
+    if self.capital_gains:
+      taxable_income -= (self.capital_gains.short_term_at_20_percent 
+                    + self.capital_gains.long_term_at_12_5_percent 
+                    + self.capital_gains.long_term_at_20_percent)
+      
+    if is_income_above_rebate:
       base_tax, tax_per_slab = self.__calculate_tax_per_slab(taxable_income, slab)
     else:
       base_tax, tax_per_slab = 0.0, {}
+      
+      
     if apply_deduction:
       base_tax = max(base_tax - apply_deduction, 0.0)
     base_tax += self.capital_gains.total_capital_gains_tax
@@ -223,7 +260,7 @@ class IncomeTaxCalculator:
     }
 
 
-  def calculate_tax(self, is_comparision_needed: bool = True, is_tax_per_slab_needed: bool = False):
+  def calculate_tax(self, is_comparision_needed: bool = True, is_tax_per_slab_needed: bool = False, display_result: bool = False) -> dict:
     """Calculate tax based on the individual's income and deductions.
 
     Args:
@@ -235,15 +272,6 @@ class IncomeTaxCalculator:
     """
     slabs = get_tax_slabs(self.settings.financial_year, self.settings.age)
     new_taxable, old_taxable = self.__get_taxable_income()
-    if self.capital_gains:
-      new_taxable -= (self.capital_gains.short_term_at_20_percent 
-                    + self.capital_gains.long_term_at_12_5_percent 
-                    + self.capital_gains.long_term_at_20_percent)
-      old_taxable -= (self.capital_gains.short_term_at_20_percent 
-                    + self.capital_gains.long_term_at_12_5_percent 
-                    + self.capital_gains.long_term_at_20_percent)
-
-    # choose appropriate old-regime slab based on age
     if self.settings.age >= 80:
       old_slab_key = OLD_REGIME_SUPER_SEN_KEY
     elif self.settings.age >= 60:
@@ -297,16 +325,22 @@ class IncomeTaxCalculator:
       "tax_liability": {
         "new_regime": {
           "total":  math.ceil(new_tax_total),
-          "surcharge": new_result["surcharge"]["amount"],
-          "cess" : new_result["cess"]
+          "components":{
+            "initial_tax": new_result["base_tax"],
+            "surcharge": new_result["surcharge"]["amount"],
+            "cess" : new_result["cess"]
+          },
         },
         "old_regime": {
           "total": math.ceil(old_tax_total),
-          "surcharge": old_result["surcharge"]["amount"],
-          "cess" : old_result["cess"]
+          "components": {
+            "initial_tax": old_result["base_tax"],
+            "surcharge": old_result["surcharge"]["amount"],
+            "cess" : old_result["cess"]
+          }
+        }
         }
       }
-    }
 
     if is_comparision_needed:
       result["tax_regime_comparison"] = recommendation
@@ -316,8 +350,9 @@ class IncomeTaxCalculator:
         "new_regime": new_result["tax_per_slab"],
         "old_regime": old_result["tax_per_slab"]
       }
-
-    pprint.pprint(result, indent=2, sort_dicts=False)
+    result = self.__stringify_keys(result)
+    if display_result:
+      pprint.pprint(result, indent=2, sort_dicts=False)
     return result
 
 
