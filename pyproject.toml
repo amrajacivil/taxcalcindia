@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "taxcalcindia"
-version = "0.1.1"
+version = "0.1.2"
 description = "A package to calculate income tax for Indian taxpayers"
 readme = "README.md"
 requires-python = ">=3.9"

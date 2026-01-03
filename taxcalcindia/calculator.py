@@ -41,6 +41,7 @@ class IncomeTaxCalculator:
     self.business=business or BusinessIncome()
     self.other_income=other_income or OtherIncome()
     self.deductions=deductions or Deductions()
+    self._tax_result_cache: dict | None = None
 
   def _validate_inputs(
       self, settings, salary, capital_gains, business, other_income, deductions
@@ -145,7 +146,6 @@ class IncomeTaxCalculator:
       return min(5000,0.25*self.gross_income,0.1*self.salary.basic_and_da)
     return 0
 
-
   def __get_taxable_income(self):
     if self.settings.employment_type==EmploymentType.SELF_EMPLOYED:
       old_regime_taxable_income=max(0, self.gross_income  - self.total_deductions)
@@ -187,9 +187,6 @@ class IncomeTaxCalculator:
       return {
         "rate_percent": new_rate, "amount": calc_amount(new_rate)
       }
-
-
-
 
   def __calculate_tax_per_slab(self,taxable_income,slab):
     tax = 0.0
@@ -259,7 +256,6 @@ class IncomeTaxCalculator:
       "total_tax": round(total_tax, 2)
     }
 
-
   def calculate_tax(self, is_comparision_needed: bool = True, is_tax_per_slab_needed: bool = False, display_result: bool = False) -> dict:
     """Calculate tax based on the individual's income and deductions.
 
@@ -270,6 +266,8 @@ class IncomeTaxCalculator:
     Returns:
         dict: A dictionary containing the tax calculation results.
     """
+    if self._tax_result_cache is not None:
+        return self._tax_result_cache
     slabs = get_tax_slabs(self.settings.financial_year, self.settings.age)
     new_taxable, old_taxable = self.__get_taxable_income()
     if self.settings.age >= 80:
@@ -353,6 +351,96 @@ class IncomeTaxCalculator:
     result = self.__stringify_keys(result)
     if display_result:
       pprint.pprint(result, indent=2, sort_dicts=False)
+    self._tax_result_cache = result
     return result
 
+  def new_regime_tax(self) -> int:
+    """Calculates the total tax payable under the new tax regime.
 
+    Returns:
+        int: Total tax payable under the new tax regime.
+    """    
+    result = self.calculate_tax(is_comparision_needed=False)
+    return result["tax_liability"]["new_regime"]["total"]
+
+  def old_regime_tax(self) -> int:
+    """Calculates the total tax payable under the old tax regime.
+
+    Returns:
+        int: Total tax payable under the old tax regime.
+    """    
+    result = self.calculate_tax(is_comparision_needed=False)
+    return result["tax_liability"]["old_regime"]["total"]
+  
+  def new_regime_taxable_income(self) -> float:
+    """Calculates the taxable income under the new tax regime.
+
+    Returns:
+        float: Taxable income under the new tax regime.
+    """    
+    result = self.calculate_tax(is_comparision_needed=False)
+    return result["income_summary"]["new_regime_taxable_income"]
+
+  def old_regime_taxable_income(self) -> float:
+    """Calculates the taxable income under the old tax regime.
+
+    Returns:
+        float: Taxable income under the old tax regime.
+    """    
+    result = self.calculate_tax(is_comparision_needed=False)
+    return result["income_summary"]["old_regime_taxable_income"]
+  
+  def recommended_regime(self) -> str:
+    """Calculates the recommended tax regime based on the user's income and deductions.
+
+    Returns:
+        str: Recommended tax regime ("new" or "old").
+    """    
+    result = self.calculate_tax(is_comparision_needed=True)
+    return result["tax_regime_comparison"]["recommended_regime"]
+  
+  def tax_savings(self) -> int:
+    """Calculates the tax savings by comparing the new and old tax regimes.
+
+    Returns:
+        int: Tax savings amount.
+    """    
+    result = self.calculate_tax(is_comparision_needed=True)
+    return result["tax_regime_comparison"]["tax_savings_amount"]
+  
+  def new_regime_breakup(self) -> dict:
+    """Calculates the tax breakup under the new tax regime.
+
+    Returns:
+        dict: Tax breakup under the new tax regime.
+    """    
+    result = self.calculate_tax(is_comparision_needed=False)
+    return result["tax_liability"]["new_regime"]["components"]
+
+  def old_regime_breakup(self) -> dict:
+    """Calculates the tax breakup under the old tax regime.
+
+    Returns:
+        dict: Tax breakup under the old tax regime.
+    """    
+    result = self.calculate_tax(is_comparision_needed=False)
+    return result["tax_liability"]["old_regime"]["components"]
+  
+  def tax_per_slab(self, regime: str = "new") -> dict:
+    """Calculates the tax per slab under the specified tax regime.
+
+    Args:
+        regime (str, optional): The tax regime ("new" or "old"). Defaults to "new".
+
+    Raises:
+        ValueError: If the regime is not "new" or "old".
+
+    Returns:
+        dict: Tax per slab under the specified tax regime.
+    """
+    if regime not in ("new", "old"):
+        raise ValueError("regime must be 'new' or 'old'")
+
+    result = self.calculate_tax(is_tax_per_slab_needed=True)
+    key = "new_regime" if regime == "new" else "old_regime"
+    return result["tax_per_slabs"][key]
