@@ -354,6 +354,8 @@ class IncomeTaxCalculator:
       }
     result = self.__stringify_keys(result)
     self._tax_result_cache[cache_key] = result
+    if display_result:
+      pprint.pprint(result)
     return result
 
   @property
