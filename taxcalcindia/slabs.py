@@ -1,7 +1,6 @@
 from typing import Dict, List, Tuple, Union
 from types import MappingProxyType
 
-
 Number = Union[int, float]
 Slab = Tuple[Number, float]
 

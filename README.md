@@ -78,7 +78,7 @@ Contributions via PRs are welcome. Please:
 
 ## License
 
-MIT — see [LICENSE]((https://github.com/amrajacivil/taxcalcindia))
+MIT — see [LICENSE](https://github.com/amrajacivil/taxcalcindia)
 
 ## Important notice
 
