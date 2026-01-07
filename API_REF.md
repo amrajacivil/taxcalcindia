@@ -145,10 +145,35 @@ Usage:
     print(calc.recommended_regime)
     print(calc.tax_savings)
 
+## Cache Management
+
+### clear_cache() -> None
+
+Clears all cached computed values (e.g., taxable income, tax liability,
+regime comparison, tax per slab) so that subsequent accesses recompute
+using the current calculator inputs.
+
+Use this after mutating any of the calculator inputs (such as `salary`,
+`deductions`, or `settings`) on an existing `IncomeTaxCalculator` instance.
+
+Usage:
+
+    # Update inputs on an existing calculator instance
+    calc.salary = updated_salary
+    calc.deductions = updated_deductions
+
+    # Invalidate previously cached results
+    calc.clear_cache()
+
+    # Access getters or recompute full tax with fresh values
+    print(calc.new_regime_tax)
+    report = calc.calculate_tax()
+
 ---
 
 ## Usage Guidelines
 
 - Prefer cheap getters for quick access
 - Use calculate_tax() for full reports
-- All getters are cached and do not recompute tax
+- All getters are cached and do not recompute tax; call `clear_cache()`
+  after changing calculator inputs to force recomputation of cached values
