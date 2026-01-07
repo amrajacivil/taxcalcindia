@@ -85,35 +85,35 @@ Usage:
 
 ---
 
-### tax_savings() (method)
+### tax_savings (property)
 
 Returns tax savings when choosing the recommended regime.
 
 Usage:
 
-    calc.tax_savings()
+    calc.tax_savings
 
 ---
 
 ## Tax Breakdown APIs
 
-### new_regime_breakup() (method)
+### new_regime_breakup (property)
 
 Returns tax components (initial tax, surcharge, cess) under the new tax regime.
 
 Usage:
 
-    calc.new_regime_breakup()
+    calc.new_regime_breakup
 
 ---
 
-### old_regime_breakup() (method)
+### old_regime_breakup (property)
 
 Returns tax components (initial tax, surcharge, cess) under the old tax regime.
 
 Usage:
 
-    calc.old_regime_breakup()
+    calc.old_regime_breakup
 
 ---
 
@@ -143,7 +143,7 @@ Usage:
     print(calc.new_regime_tax)
     print(calc.old_regime_tax)
     print(calc.recommended_regime)
-    print(calc.tax_savings())
+    print(calc.tax_savings)
 
 ---
 

@@ -250,7 +250,35 @@ class TestIncomeTaxCalculator(unittest.TestCase):
       comp.get("summary"),
       "New tax regime results in a savings of ₹26000 compared to the old regime",
     )
-  
+
+    # --- New: cover helper properties and cache behavior ---
+    # property helpers should reflect values from the computed output
+    self.assertAlmostEqual(float(calc.new_regime_tax), float(output["tax_liability"]["new_regime"]["total"]), places=6)
+    self.assertAlmostEqual(float(calc.old_regime_tax), float(output["tax_liability"]["old_regime"]["total"]), places=6)
+
+    self.assertAlmostEqual(float(calc.new_regime_taxable_income), float(output["income_summary"]["new_regime_taxable_income"]), places=6)
+    self.assertAlmostEqual(float(calc.old_regime_taxable_income), float(output["income_summary"]["old_regime_taxable_income"]), places=6)
+
+    self.assertEqual(calc.recommended_regime, comp.get("recommended_regime"))
+    self.assertEqual(calc.tax_savings, comp.get("tax_savings_amount"))
+
+    self.assertEqual(calc.new_regime_breakup, output["tax_liability"]["new_regime"]["components"])
+    self.assertEqual(calc.old_regime_breakup, output["tax_liability"]["old_regime"]["components"])
+
+    # tax_per_slab default (new) and explicit old should match the detailed output
+    self.assertEqual(calc.tax_per_slab(), output["tax_per_slabs"]["new_regime"])
+    self.assertEqual(calc.tax_per_slab("old"), output["tax_per_slabs"]["old_regime"])
+
+    # cache behaviour: calling property populates cache for the (False, False, False) key
+    cached_val = calc.new_regime_tax
+    # mutate underlying input so true value would change if cache is cleared
+    calc.business.business_income += 100000
+    # without clearing cache, property should still return cached value
+    self.assertEqual(calc.new_regime_tax, cached_val)
+    # after clearing cache value should update
+    calc.clear_cache()
+    self.assertNotEqual(calc.new_regime_tax, cached_val)
+
   def test_case_6_high_income_hra_and_deductions(self):
     settings = TaxSettings(age=50, financial_year=2025, is_metro_resident=True)
     salary = SalaryIncome(
