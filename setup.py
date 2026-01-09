@@ -26,5 +26,5 @@ setup(
         "Operating System :: MacOS",
         "Operating System :: Microsoft :: Windows",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.9",
 )
