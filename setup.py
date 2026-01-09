@@ -21,7 +21,7 @@ setup(
         "Intended Audience :: End Users/Desktop",
         "Intended Audience :: Information Technology",
         "Intended Audience :: Other Audience",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
         "Operating System :: Unix",
         "Operating System :: MacOS",
         "Operating System :: Microsoft :: Windows",
