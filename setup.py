@@ -10,7 +10,7 @@ setup(
     packages=find_packages(),
     install_requires=[
     ],
-    keywords=["tax", "india tax", "income tax", "tax calculation","itr","tax assistance"],
+    keywords=["tax", "india tax", "income tax", "tax calculation", "itr", "tax assistance"],
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/amrajacivil/taxcalcindia",
