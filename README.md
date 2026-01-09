@@ -2,7 +2,14 @@
 
 A lightweight Python package to calculate Indian income tax for individuals. Designed for local use and packaging on PyPI.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/taxcalcindia?color=darkgreen)
+
+![GitHub tag (with filter)](https://img.shields.io/github/v/tag/amrajacivil/taxcalcindia) ![Static Badge](https://img.shields.io/badge/OS-Linux_%7C_Windows_%7C_macOS-blue) ![Static Badge](https://img.shields.io/badge/coverage-91%25-blue) ![Static Badge](https://img.shields.io/badge/covered_lines_of_code-618-blue)
+
+![PyPI - Version](https://img.shields.io/pypi/v/taxcalcindia) ![PyPI - Format](https://img.shields.io/pypi/format/taxcalcindia?color=darkgreen) ![Static Badge](https://img.shields.io/badge/wheels-Linux_%7C_Windows_%7C_macOS-blue) ![Static Badge](https://img.shields.io/badge/Architecture-x86__64_%7C_ARM__64-blue) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/taxcalcindia) ![Static Badge](https://img.shields.io/badge/PyPy-3.8_%7C_3.9_%7C_3.10-blue) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/taxcalcindia) 
+
+![GitHub License](https://img.shields.io/github/license/amrajacivil/taxcalcindia?color=darkgreen) ![PyPI - Status](https://img.shields.io/pypi/status/taxcalcindia) 
+
 
 ## Table of Contents
 
