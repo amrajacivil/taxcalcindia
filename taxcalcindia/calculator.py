@@ -38,7 +38,9 @@ class IncomeTaxCalculator:
     self._has_salary = salary is not None
     self.salary=salary or SalaryIncome()
     self.capital_gains=capital_gains or CapitalGainsIncome()
+    self._has_business_income = business is not None
     self.business=business or BusinessIncome()
+    self._has_other_income = other_income is not None
     self.other_income=other_income or OtherIncome()
     self.deductions=deductions or Deductions()
     # cache keyed by (is_comparision_needed, is_tax_per_slab_needed, display_result)
@@ -68,9 +70,9 @@ class IncomeTaxCalculator:
     if not isinstance(settings, TaxSettings):
         raise TypeError("settings must be TaxSettings object")
 
-    if not any([salary,business,other_income]):
+    if not any([salary,business,other_income,capital_gains]):
       raise ValueError(
-          "atleast one income source (salary, business, or other_income) is required"
+          "atleast one income source (salary, business, capital_gains or other_income) is required"
       )
 
     if salary and not isinstance(salary, SalaryIncome):
@@ -228,9 +230,12 @@ class IncomeTaxCalculator:
       is_income_above_rebate=False
 
     if self.capital_gains:
-      taxable_income -= (self.capital_gains.short_term_at_20_percent 
-                    + self.capital_gains.long_term_at_12_5_percent 
-                    + self.capital_gains.long_term_at_20_percent)
+      #TODO: Fix the logic for standalone capital gains
+
+      taxable_income -= (self.capital_gains.short_term_at_20_percent
+                          + self.capital_gains.long_term_at_12_5_percent
+                          + self.capital_gains.long_term_at_20_percent)
+      
       
     if is_income_above_rebate:
       base_tax, tax_per_slab = self.__calculate_tax_per_slab(taxable_income, slab)

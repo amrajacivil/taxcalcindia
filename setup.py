@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="taxcalcindia",
-    version="0.1.3",
+    version="0.1.4",
     author="Arumugam Maharaja",
     description="A package to calculate income tax for Indian taxpayers",
     author_email="raja1998civil@gmail.com",
