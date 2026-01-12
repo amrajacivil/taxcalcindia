@@ -13,6 +13,18 @@ authors = [
   { name = "Arumugam Maharaja", email = "raja1998civil@gmail.com" }
 ]
 dependencies = []
-
+keywords = ["tax", "india tax", "income tax", "tax calculation", "itr", "tax assistance"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Other Audience",
+  "Programming Language :: Python :: 3",
+  "Operating System :: Unix",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+]
 [project.urls]
 Homepage = "https://github.com/amrajacivil/taxcalcindia"
