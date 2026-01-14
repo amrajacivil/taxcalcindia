@@ -38,7 +38,9 @@ class IncomeTaxCalculator:
     self._has_salary = salary is not None
     self.salary=salary or SalaryIncome()
     self.capital_gains=capital_gains or CapitalGainsIncome()
+    self._has_business_income = business is not None
     self.business=business or BusinessIncome()
+    self._has_other_income = other_income is not None
     self.other_income=other_income or OtherIncome()
     self.deductions=deductions or Deductions()
     # cache keyed by (is_comparision_needed, is_tax_per_slab_needed, display_result)
@@ -68,9 +70,9 @@ class IncomeTaxCalculator:
     if not isinstance(settings, TaxSettings):
         raise TypeError("settings must be TaxSettings object")
 
-    if not any([salary,business,other_income]):
+    if not any([salary, business, other_income, capital_gains]):
       raise ValueError(
-          "atleast one income source (salary, business, or other_income) is required"
+          "at least one income source (salary, business, capital_gains or other_income) is required"
       )
 
     if salary and not isinstance(salary, SalaryIncome):
@@ -220,28 +222,51 @@ class IncomeTaxCalculator:
         return [self.__stringify_keys(i) for i in obj]
     return obj
   
-  def __compute_regime_tax(self, taxable_income: float, slab, rebate_limit: float, regime_type: str, apply_deduction: float = 0.0):
-    """Compute tax, surcharge, and cess for a given regime. Returns a dict with components."""
-    if taxable_income > rebate_limit:
-      is_income_above_rebate=True
-    else:
-      is_income_above_rebate=False
+  def __prepare_capital_gains_adjustments(self, taxable_income: float, regime_type: str):
+    """Adjust taxable income and surcharge base for capital gains and detect LTGC rebate applicability."""
+    ltcg_rebate_applied = False
+    cg_special_sum = (
+      self.capital_gains.short_term_at_20_percent
+      + self.capital_gains.long_term_at_12_5_percent
+      + self.capital_gains.long_term_at_20_percent
+    )
+    taxable_after = taxable_income - cg_special_sum
+    surcharge_taxable = taxable_after
+    if not self._has_salary and not self._has_business_income and not self._has_other_income:
+      if regime_type == "new" and taxable_after > 400000:
+        ltcg_rebate_applied = True
+      elif regime_type == "old" and taxable_after > 250000:
+        ltcg_rebate_applied = True
+      # surcharge should consider the special-capital-gains component for standalone cases
+      surcharge_taxable = taxable_after + cg_special_sum
+    return taxable_after, surcharge_taxable, ltcg_rebate_applied, cg_special_sum
 
-    if self.capital_gains:
-      taxable_income -= (self.capital_gains.short_term_at_20_percent 
-                    + self.capital_gains.long_term_at_12_5_percent 
-                    + self.capital_gains.long_term_at_20_percent)
-      
-    if is_income_above_rebate:
-      base_tax, tax_per_slab = self.__calculate_tax_per_slab(taxable_income, slab)
+  def __add_capital_gains_tax(self, base_tax: float, regime_type: str, ltcg_rebate_applied: bool) -> float:
+    """Add capital gains tax component to base_tax according to income type and regime."""
+    if not self._has_salary and not self._has_business_income and not self._has_other_income:
+      if regime_type == "new":
+        if self.capital_gains.short_term_at_normal < self.capital_gains.long_term_at_20_percent:
+          total_reduction = 400000 - self.capital_gains.short_term_at_normal
+        else:
+          total_reduction = 400000
+      else:
+        if self.capital_gains.short_term_at_normal < self.capital_gains.long_term_at_20_percent:
+          total_reduction = 250000 - self.capital_gains.short_term_at_normal
+        else:
+          total_reduction = 250000
+      base_tax += self.capital_gains._total_capital_gains_standalone_tax(
+        0 if ltcg_rebate_applied else total_reduction
+      )
     else:
-      base_tax, tax_per_slab = 0.0, {}
-      
-      
+      base_tax += self.capital_gains.total_capital_gains_tax
+    return base_tax
+
+  def __finalize_tax_components(self, base_tax: float, surcharge_taxable: float, regime_type: str, apply_deduction: float = 0.0):
+    """Apply deduction, surcharge and cess; return final components dict."""
     if apply_deduction:
       base_tax = max(base_tax - apply_deduction, 0.0)
-    base_tax += self.capital_gains.total_capital_gains_tax
-    surcharge = self.__calculate_surcharge(taxable_income, regime_type, base_tax) or {"amount": 0.0, "rate_percent": 0}
+
+    surcharge = self.__calculate_surcharge(surcharge_taxable, regime_type, base_tax) or {"amount": 0.0, "rate_percent": 0}
     surcharge_amount = surcharge.get("amount", 0.0)
     tax_after_surcharge = base_tax + (surcharge_amount if surcharge_amount else 0.0)
     cess = round(tax_after_surcharge * 0.04, 2)
@@ -249,12 +274,35 @@ class IncomeTaxCalculator:
 
     return {
       "base_tax": round(base_tax, 2),
-      "tax_per_slab": tax_per_slab,
       "surcharge": surcharge,
       "surcharge_amount": round(surcharge_amount, 2),
       "cess": cess,
       "total_tax": round(total_tax, 2)
     }
+
+  def __compute_regime_tax(self, taxable_income: float, slab, rebate_limit: float, regime_type: str, apply_deduction: float = 0.0):
+    """Compute tax, surcharge, and cess for a given regime. Returns a dict with components."""
+    # preserve rebate decision based on original taxable income (matches previous behaviour)
+    is_income_above_rebate = taxable_income > rebate_limit
+
+    # prepare capital gains adjustments (returns taxable_after and surcharge base)
+    taxable_after, surcharge_taxable, ltcg_rebate_applied, _ = self.__prepare_capital_gains_adjustments(taxable_income, regime_type)
+
+    # base tax from slabs (applies only if above rebate limit)
+    if is_income_above_rebate:
+      base_tax, tax_per_slab = self.__calculate_tax_per_slab(taxable_after, slab)
+    else:
+      base_tax, tax_per_slab = 0.0, {}
+
+    # add capital gains tax component
+    base_tax = self.__add_capital_gains_tax(base_tax, regime_type, ltcg_rebate_applied)
+
+    # finalize by applying deduction, surcharge and cess
+    final = self.__finalize_tax_components(base_tax, surcharge_taxable, regime_type, apply_deduction)
+    # merge slab breakdown back
+    final["tax_per_slab"] = tax_per_slab
+
+    return final
 
   def calculate_tax(self, is_comparision_needed: bool = True, is_tax_per_slab_needed: bool = False, display_result: bool = False) -> dict:
     """Calculate tax based on the individual's income and deductions.
