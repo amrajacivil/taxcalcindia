@@ -70,7 +70,7 @@ class IncomeTaxCalculator:
     if not isinstance(settings, TaxSettings):
         raise TypeError("settings must be TaxSettings object")
 
-    if not any([salary,business,other_income,capital_gains]):
+    if not any([salary, business, other_income, capital_gains]):
       raise ValueError(
           "atleast one income source (salary, business, capital_gains or other_income) is required"
       )
