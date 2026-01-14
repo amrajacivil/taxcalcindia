@@ -72,7 +72,7 @@ class IncomeTaxCalculator:
 
     if not any([salary, business, other_income, capital_gains]):
       raise ValueError(
-          "atleast one income source (salary, business, capital_gains or other_income) is required"
+          "at least one income source (salary, business, capital_gains or other_income) is required"
       )
 
     if salary and not isinstance(salary, SalaryIncome):
