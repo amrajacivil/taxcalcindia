@@ -91,6 +91,10 @@ MIT — see [LICENSE](https://github.com/amrajacivil/taxcalcindia)
 
 - **Do NOT use this package as the sole source for filing income tax returns. This project is provided as an aid/reference only. Always audit calculations yourself or consult a government-approved tax professional or authorised tax-filing service before submitting returns. The creator is not responsible for any misfiled tax returns or financial/legal consequences arising from using this package.**
 
+### Package Naming and trademark
+
+A brief trademark check for the package name is recorded in [NAMING.md](./NAMING.md). The name "taxcalcindia" was searched on the Government of India Registered Trademark site and, at the time of this release, no registrations were found. This information is provided for reference only and does not constitute legal advice.
+
 
 ## If you find this project useful, A small cup helps a lot!
 
@@ -99,5 +103,8 @@ MIT — see [LICENSE](https://github.com/amrajacivil/taxcalcindia)
 ## More from the developer
 
 Reach out or explore other projects by the developer at: https://amraja.in/
+
+
+If any link in this README does not redirect or returns "Not Found", please locate the referenced document in the parent GitHub repository: https://github.com/amrajacivil/taxcalcindia
 
 
