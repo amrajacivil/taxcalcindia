@@ -1,5 +1,4 @@
 
-```markdown
 # Contributor Code of Conduct
 
 We expect all contributors to behave respectfully. Be welcoming, patient and constructive.
