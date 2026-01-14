@@ -345,6 +345,62 @@ class TestIncomeTaxCalculator(unittest.TestCase):
       "Old tax regime results in a savings of ₹1134705 compared to the new regime",
     )
 
+  def test_case_7_standalone_capital_gains(self):
+    settings = TaxSettings(age=27, financial_year=2025)
+    capital_gains = CapitalGainsIncome(
+      short_term_at_normal=5000000,
+      short_term_at_20_percent=500000,
+      long_term_at_12_5_percent=500000,
+      long_term_at_20_percent=500000,
+    )
+    deductions = Deductions(section_80c=150000)
+
+    calc = IncomeTaxCalculator(settings=settings, capital_gains=capital_gains, deductions=deductions)
+    output = calc.calculate_tax(is_comparision_needed=True, is_tax_per_slab_needed=False, display_result=False)
+
+    # income summary assertions
+    self.assertIn("income_summary", output)
+    inc = output["income_summary"]
+    self.assertAlmostEqual(float(inc.get("gross_income", 0.0)), 6500000.0)
+    self.assertAlmostEqual(float(inc.get("gross_deductions", 0.0)), 150000.0)
+    self.assertAlmostEqual(float(inc.get("new_regime_taxable_income", 0.0)), 6500000.0)
+    self.assertAlmostEqual(float(inc.get("old_regime_taxable_income", 0.0)), 6350000.0)
+
+    # tax liability assertions (use helper for totals)
+    self.assertIn("tax_liability", output)
+    self.assert_tax_liability(output, expected_new=1535820, expected_old=1750320)
+
+    tax_liab = output["tax_liability"]
+    new_reg = tax_liab["new_regime"]
+    old_reg = tax_liab["old_regime"]
+    for reg in (new_reg, old_reg):
+      self.assertIsInstance(reg, dict)
+      self.assertIn("total", reg)
+      self.assertIn("components", reg)
+      comps = reg["components"]
+      self.assertIn("initial_tax", comps)
+      self.assertIn("surcharge", comps)
+      self.assertIn("cess", comps)
+
+    # detailed component checks
+    self.assertAlmostEqual(float(new_reg["components"].get("initial_tax", 0.0)), 1342500.0, places=6)
+    self.assertAlmostEqual(float(new_reg["components"].get("surcharge", 0.0)), 134250.0, places=6)
+    self.assertAlmostEqual(float(new_reg["components"].get("cess", 0.0)), 59070.0, places=6)
+
+    self.assertAlmostEqual(float(old_reg["components"].get("initial_tax", 0.0)), 1530000.0, places=6)
+    self.assertAlmostEqual(float(old_reg["components"].get("surcharge", 0.0)), 153000.0, places=6)
+    self.assertAlmostEqual(float(old_reg["components"].get("cess", 0.0)), 67320.0, places=6)
+
+    # comparison metadata
+    self.assertIn("tax_regime_comparison", output)
+    comp = output["tax_regime_comparison"]
+    self.assertEqual(comp.get("recommended_regime"), "new")
+    self.assertEqual(comp.get("tax_savings_amount"), 214500)
+    self.assertEqual(
+      comp.get("summary"),
+      "New tax regime results in a savings of ₹214500 compared to the old regime",
+    )
+  
   def test_zero_income_all_zero(self):
     settings = TaxSettings(age=30, financial_year=2025, is_metro_resident=False)
     salary = SalaryIncome(basic_and_da=0, other_allowances=0, bonus_and_commissions=0)

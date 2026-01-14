@@ -169,6 +169,23 @@ class CapitalGainsIncome:
           + self.long_term_at_12_5_percent * 0.125
           + self.long_term_at_20_percent * 0.2
     )
+  
+  
+  def _total_capital_gains_standalone_tax(self, ltcg_regate: float) -> float:
+    """Calculate the total capital gains tax as a standalone component.
+
+      Args:
+          ltcg_regate (float): Amount of long-term capital gains eligible for rebate/exemption.
+
+      Returns:
+          float: Total standalone capital gains tax after considering rebate/exemption.
+    """
+    return (
+      self.short_term_at_20_percent * 0.2
+          + self.long_term_at_12_5_percent * 0.125
+          + (self.long_term_at_20_percent - ltcg_regate) * 0.2
+    )
+    
 
 class OtherIncome:
   """Other income details for the taxpayer.
