@@ -38,6 +38,9 @@ Install from PyPI:
 pip install taxcalcindia
 ```
 
+## API Documentation
+
+Detailed documentation is available at: https://taxcalcindia.readthedocs.io/en/latest/index.html. The documentation site provides downloadable formats — you can download the docs as PDF or EPUB from the Read the Docs site.
 
 ## Quick start
 
@@ -61,19 +64,6 @@ print(result)
 A longer, runnable example is provided in the repository: [example.ipynb](https://github.com/amrajacivil/taxcalcindia). It contains multiple scenarios and is extended based on user requests.
 
 
-## API pointers
-
-- Main calculator: `taxcalcindia.calculator.IncomeTaxCalculator`
-- Input models:
-  - EmploymentType (Enum)
-  - TaxSettings (age, financial_year, is_metro_resident, employment_type)
-  - SalaryIncome (basic_and_da, hra, other_allowances, bonus_and_commissions, total, total_eligible_hra(settings))
-  - BusinessIncome (business_income, property_income, total)
-  - CapitalGainsIncome (short_term_at_normal, short_term_at_20_percent, long_term_at_12_5_percent, long_term_at_20_percent, total, total_capital_gains_tax)
-  - OtherIncome (savings_account_interest, fixed_deposit_interest, other_sources, total)
-  - Deductions (section_80c, section_80d, section_80gg, section_24b, section_80ccd_1b, section_80ccd_2, section_80eea, section_80u, section_80eeb, section_80e, section_80g_50percent, section_80g_100percent, section_80gga, section_80ggc, rent_for_hra_exemption, professional_tax, food_coupons, other_exemption, section_80tta, section_80ttb, total)
-- Slab retrieval: `taxcalcindia.slabs.get_tax_slabs`
-- Package exceptions: `taxcalcindia.exceptions.TaxCalculationException`
 
 ## Contributing
 
