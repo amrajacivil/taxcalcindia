@@ -8,3 +8,7 @@ dist/
 poetry.lock
 .coverage
 .DS_Store
+_build
+_static
+_templates
+.taxcalcvenv
