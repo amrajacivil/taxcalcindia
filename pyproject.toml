@@ -28,3 +28,5 @@ classifiers = [
 ]
 [project.urls]
 Homepage = "https://github.com/amrajacivil/taxcalcindia"
+Documentation = "https://taxcalcindia.readthedocs.io/en/latest/"
+Developer = "https://amraja.in/"
