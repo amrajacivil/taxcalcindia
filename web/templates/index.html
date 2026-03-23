@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Tax Calculator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>India Tax Calculator</h1>
+            <p>Compare Old vs New Tax Regimes (FY 2025-26)</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="calculator-grid">
+            <!-- Input Form Section -->
+            <section class="form-section card">
+                <form id="taxForm">
+                    <div class="section-group">
+                        <h3>Taxpayer Settings</h3>
+                        <div class="input-grid">
+                            <div class="form-control">
+                                <label for="age">Age</label>
+                                <input type="number" id="age" name="age" value="27" min="18" max="100" required>
+                            </div>
+                            <div class="form-control">
+                                <label for="financial_year">Financial Year</label>
+                                <select id="financial_year" name="financial_year">
+                                    <option value="2025" selected>2025-26</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label for="employment_type">Employment</label>
+                                <select id="employment_type" name="employment_type">
+                                    <option value="private">Private</option>
+                                    <option value="government">Government</option>
+                                    <option value="self_employed">Self Employed</option>
+                                </select>
+                            </div>
+                            <div class="form-control checkbox-control">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="is_metro_resident" name="is_metro_resident" checked>
+                                    <span>Metro Resident</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-group">
+                        <h3>Salary Income (Annual)</h3>
+                        <div class="input-grid">
+                            <div class="form-control">
+                                <label for="basic_and_da">Basic + DA</label>
+                                <input type="number" id="basic_and_da" name="basic_and_da" value="900000" min="0">
+                            </div>
+                            <div class="form-control">
+                                <label for="hra">HRA Received</label>
+                                <input type="number" id="hra" name="hra" value="400000" min="0">
+                            </div>
+                            <div class="form-control">
+                                <label for="other_allowances">Other Allowances</label>
+                                <input type="number" id="other_allowances" name="other_allowances" value="0" min="0">
+                            </div>
+                            <div class="form-control">
+                                <label for="bonus">Bonus / Commission</label>
+                                <input type="number" id="bonus" name="bonus" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-group">
+                        <h3>Deductions & Exemptions</h3>
+                        <div class="input-grid">
+                            <div class="form-control">
+                                <label for="rent_paid">Annual Rent Paid</label>
+                                <input type="number" id="rent_paid" name="rent_paid" value="240000" min="0">
+                            </div>
+                            <div class="form-control">
+                                <label for="section_80c">Section 80C</label>
+                                <input type="number" id="section_80c" name="section_80c" value="150000" min="0" max="150000">
+                                <small>EPF, PPF, ELSS, etc. (Max 1.5L)</small>
+                            </div>
+                            <div class="form-control">
+                                <label for="section_80d">Section 80D</label>
+                                <input type="number" id="section_80d" name="section_80d" value="25000" min="0">
+                                <small>Medical Insurance</small>
+                            </div>
+                            <div class="form-control">
+                                <label for="professional_tax">Professional Tax</label>
+                                <input type="number" id="professional_tax" name="professional_tax" value="2500" min="0" max="2500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Calculate Tax</button>
+                </form>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section" style="display: none;">
+                <div class="recommendation-card card highlight">
+                    <h2 id="recommendedText">New Regime is better!</h2>
+                    <p id="savingsText">You save ₹0 annually.</p>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="regime-card card">
+                        <h3>New Regime</h3>
+                        <div class="amount-group">
+                            <span class="label">Total Tax Payable</span>
+                            <span class="amount" id="newTotalTax">₹0</span>
+                        </div>
+                        <div class="breakdown-list">
+                            <div class="breakdown-item">
+                                <span>Taxable Income</span>
+                                <span id="newTaxableIncome">₹0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>Base Tax</span>
+                                <span id="newBaseTax">₹0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>Cess (4%)</span>
+                                <span id="newCess">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="regime-card card">
+                        <h3>Old Regime</h3>
+                        <div class="amount-group">
+                            <span class="label">Total Tax Payable</span>
+                            <span class="amount" id="oldTotalTax">₹0</span>
+                        </div>
+                        <div class="breakdown-list">
+                            <div class="breakdown-item">
+                                <span>Taxable Income</span>
+                                <span id="oldTaxableIncome">₹0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>Base Tax</span>
+                                <span id="oldBaseTax">₹0</span>
+                            </div>
+                            <div class="breakdown-item">
+                                <span>Cess (4%)</span>
+                                <span id="oldCess">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
